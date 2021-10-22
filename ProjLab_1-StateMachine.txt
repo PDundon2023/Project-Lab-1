@@ -1,0 +1,46 @@
+
+Reg[6:0] Rover_State;
+
+always@(*)
+
+begin
+Overall States:
+
+Red(Stop)(Red is highest Frequency):
+	When red is detected by the color sensor, send the rover into state 1;
+
+Green(Go)(Green is highest Frequency):
+	When green is detected by the color sensor, send the rover into state 2;
+
+Blue(Caution)(Blue is highest Frequency):
+	When blue is detected by the color sensor, send the rover into state 3;
+
+
+Obstacle Detection(obs_det == 0):
+	When an obstacle is detected, send the rover into state 4;
+
+default:
+	Send the rover into whatever state it is currently in;
+	Rover_State = Rover_State;
+
+end
+
+
+
+
+
+State Machine;
+
+1:
+	Use IPS_Sensor Code to make the rover turn right when the right sensor detects the track and vice versa for the left sensor.
+	Also include case for when both IPS sensors are high -> make the rover go forward(avoid the alternate path)
+2:
+	Stop the Rover Completely -> all JC's are low
+
+3:
+	Same as Green for the most part execpt slower, and no case for both IPS sensors high, take the path back onto the track.
+	
+4:
+	Send the rover backward checking both sensors(dont know which direction we will be going around the track)
+	Depending on which sensor is high, turn the rover in the direction of the sensor until the sensor is no longer high
+	Have code identical to Blue State to make sure it gets to the Blue indicator	
