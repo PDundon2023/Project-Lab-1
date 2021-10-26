@@ -65,27 +65,26 @@ module IPS_sensor(
     
     always@(*)
     begin
-       if(ips_L == 1)
+       if(obs_det == 0)
         begin
-            state_temp = 4'd1;
+            state_temp = 4'd3; //Stop
+        end
+       else if(ips_L == 1 && ips_r == 1)
+        begin
+            state_temp = 4'd0; //Forward
         end
        else if(ips_r == 1)
         begin
-            state_temp = 4'd2;
+            state_temp = 4'd2; // Right Turn
         end
-       else if(ips_r == 1 && ips_L ==1)
+       else if(ips_L == 1)
         begin
-            state_temp = 4'd3;
+            state_temp = 4'd1; // Left Turn
         end
        else
         begin
-            state_temp = 4'd0;
+            state_temp = 4'd0; // Forward
         end
-        
-       if(obs_det == 0)
-        begin
-            state_temp = 4'd0;
-        end   
     end
     
     always@(*)
@@ -110,9 +109,9 @@ module IPS_sensor(
                 end
            4'd3:
                 begin
-                    pulsewidth_r = 833334;
-                    pulsewdth_L  = 833334;
-                    motor_temp = 4'd1;
+                    pulsewdth_L = 0;
+                    pulsewidth_r = 0;
+                    motor_temp = 4'd3;
                 end
             default: // rover will continue forward
                 begin
@@ -144,6 +143,13 @@ module IPS_sensor(
                     JC4_temp  =  1;
                     JC9_temp  =  0;
                     JC10_temp =  1;
+                end
+          4'd3:
+                begin
+                    JC3_temp  =  0;
+                    JC4_temp  =  0;
+                    JC9_temp  =  0;
+                    JC10_temp =  0;  
                 end
            default: // forwards
                 begin
