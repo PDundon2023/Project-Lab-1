@@ -47,10 +47,14 @@ always@(*)
 begin
     if(obs_det == 0)
      begin
-        state_temp = 4'd1;
-        obs_state = 4'd0;
+        state_temp = 4'd2;
      end
-
+    else 
+     begin
+        state_temp = state_temp;
+     end
+     
+     
     case(state_temp)
     4'd0: // normal state
         begin
@@ -79,46 +83,33 @@ begin
                     motor_temp = 4'd0;
                 end
         end
-   4'd1: // obstacle state
-        begin
-            case(obs_state)
-            4'd0:
+        4'd2: // start of obstalce state
+         begin
+            if(ips_r == 1) // alterante path is detected 
              begin
-                if(ips_r == 0)
-                 begin
-                    pulsewidth_L = 833334;
-                    pulsewidth_r = 833334;
-                    motor_temp = 4'd4;
-                 end
-                else
-                 begin 
-                    obs_state = 4'd1;
-                 end
+                state_temp = 4'd3;
              end
-            4'd1:
+            else
              begin
-                if(ips_r == 1)
-                 begin
-                    pulsewidth_L = 833334;
-                    pulsewidth_r = 833334;
-                    motor_temp = 4'd2;
-                 end
-                else
-                 begin
-                    obs_state = 4'd2;
-                 end
+                pulsewidth_L = 833334;
+                pulsewidth_r = 833334;
+                motor_temp = 4'd4; // go backwards
              end
-            4'd2:
+         end
+        
+        4'd3:
+         begin
+            if(ips_r == 0) // rover is now on the altertante path
              begin
                 state_temp = 4'd0;
-                obs_state = 4'd3;
              end
-            default:
+            else
              begin
-                state_temp = 4'd0;
-             end         
-            endcase          
-        end
+                pulsewidth_L = 833334;
+                pulsewidth_r = 833334;
+                motor_temp = 4'd2; // turn right while detecting alterante path
+             end
+         end
    default:
         begin
             if(ips_L == 1 && ips_r == 1)
@@ -147,6 +138,7 @@ begin
                 end       
         end       
     endcase
+    
 end
 
 
