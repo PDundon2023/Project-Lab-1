@@ -47,7 +47,7 @@ always@(*)
 begin
     if(obs_det == 0)
      begin
-        state_temp = 4'd2;
+        state_temp = 4'd1;
      end
     else 
      begin
@@ -60,53 +60,79 @@ begin
         begin
            if(ips_L == 1 && ips_r == 1)
                 begin
-                    pulsewidth_L = 833334;
-                    pulsewidth_r = 833334;
+                    pulsewidth_L = 1333333;
+                    pulsewidth_r = 1333333;
                     motor_temp = 4'd0;
                 end 
           else if(ips_L == 1)
                 begin
-                    pulsewidth_L = 833334;
-                    pulsewidth_r = 833334;
+                    pulsewidth_L = 1333333;
+                    pulsewidth_r = 1333333;
                     motor_temp = 4'd1;
                 end
           else if(ips_r == 1)
                 begin
-                    pulsewidth_L = 833334;
-                    pulsewidth_r = 833334;
+                    pulsewidth_L = 1333333;
+                    pulsewidth_r = 1333333;
                     motor_temp = 4'd2;
                 end
           else
                 begin
-                    pulsewidth_L = 833334;
-                    pulsewidth_r = 833334;
+                    pulsewidth_L = 1333333;
+                    pulsewidth_r = 1333333;
                     motor_temp = 4'd0;
                 end
         end
-        4'd2: // start of obstalce state
+        4'd1: // start of obstalce state
          begin
             if(ips_r == 1) // alterante path is detected 
              begin
-                state_temp = 4'd3;
+                state_temp = 4'd2;
              end
-            else
+            else if(ips_r == 0)
              begin
-                pulsewidth_L = 833334;
-                pulsewidth_r = 833334;
+                pulsewidth_L = 500000;
+                pulsewidth_r = 500000;
                 motor_temp = 4'd4; // go backwards
              end
          end
         
+        4'd2:
+         begin
+           if(ips_L == 1) // rover is now on the altertante path                                      
+             begin
+                state_temp = 4'd3;
+             end
+            else if(ips_L == 0)
+             begin
+                pulsewidth_L = 500000;
+                pulsewidth_r = 500000;
+                motor_temp = 4'd2; // turn right while detecting alterante path
+             end
+         end
         4'd3:
          begin
-            if(ips_r == 0) // rover is now on the altertante path
+            if(ips_L == 0)
+             begin
+                state_temp = 4'd4;
+             end
+            else if(ips_L == 1)
+             begin
+                pulsewidth_L = 500000;
+                pulsewidth_r = 500000;
+                motor_temp = 4'd2; // turn right while detecting alterante path
+             end
+         end
+        4'd4:
+         begin
+            if(ips_L == 1)
              begin
                 state_temp = 4'd0;
              end
-            else
+            else if(ips_L == 0)
              begin
-                pulsewidth_L = 833334;
-                pulsewidth_r = 833334;
+                pulsewidth_L = 500000;
+                pulsewidth_r = 500000;
                 motor_temp = 4'd2; // turn right while detecting alterante path
              end
          end
@@ -114,26 +140,26 @@ begin
         begin
             if(ips_L == 1 && ips_r == 1)
                 begin
-                    pulsewidth_L = 833334;
-                    pulsewidth_r = 833334;
+                    pulsewidth_L = 1333333;
+                    pulsewidth_r = 1333333;
                     motor_temp = 4'd0;
                 end 
           else if(ips_L == 1)
                 begin
-                    pulsewidth_L = 833334;
-                    pulsewidth_r = 833334;
+                    pulsewidth_L = 1333333;
+                    pulsewidth_r = 1333333;
                     motor_temp = 4'd1;
                 end
           else if(ips_r == 1)
                 begin
-                    pulsewidth_L = 833334;
-                    pulsewidth_r = 833334;
+                    pulsewidth_L = 1333333;
+                    pulsewidth_r = 1333333;
                     motor_temp = 4'd2;
                 end
           else
                 begin
-                    pulsewidth_L = 833334;
-                    pulsewidth_r = 833334;
+                    pulsewidth_L = 1333333;
+                    pulsewidth_r = 1333333;
                     motor_temp = 4'd0;
                 end       
         end       
