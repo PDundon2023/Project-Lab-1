@@ -80,6 +80,7 @@ begin
                     state_temp = 4'd0;
                 end
         end
+        
         4'd1: // start of obstalce state
          begin
             pwm_state = 4'd4; 
@@ -97,54 +98,61 @@ begin
         
        4'd2:
         begin
-            pwm_state = 4'd4;
             if(ips_L == 0)
              begin
-                state_temp = 4'd3;
-                
+                state_temp = 4'd4; // send into next state
              end
-            else if(ips_L == 1)
+            else
              begin
-                motor_temp = 4'd3;
-                state_temp = 4'd2;
+               motor_temp = 4'd2; // turn right
+               pwm_state  = 4'd4;
+               state_temp = 4'd2;
              end
-            else 
-             begin
-                motor_temp = 4'd3;
-                pwm_state = 4'd4;
-                state_temp = 4'd2;
-             end
-        end  
+        end 
+       
+       4'd4:
+        begin
+           if(ips_r == 1)
+            begin
+                state_temp = 4'd0;
+            end
+           else
+            begin
+                motor_temp = 4'd2;
+                pwm_state  = 4'd4;
+                state_temp = 4'd4;
+            end           
+        end
         
-        4'd3:
-         begin
-            pwm_state = 4'd3;
-            motor_temp = 4'd2;
-            state_temp = 4'd3;
-         end 
-          
-        4'd5: // code to get off the alternate path
-         begin
-            pwm_state = 4'd2;
+//       4'd5:
+//        begin
+//            motor_temp = 4'd3;
+//            state_temp = 4'd5;
+//        end
+                   
+//        4'd6: // code to get off the alternate path
+//         begin
+//            pwm_state = 4'd2;
             
-            if(ips_L == 1 && ips_r == 1)
-                begin
-                    motor_temp = 4'd2;
-                end 
-          else if(ips_r == 1)
-                begin                    
-                    motor_temp = 4'd1;
-                end
-          else if(ips_L == 1)
-                begin                    
-                    motor_temp = 4'd2;
-                end
-          else
-                begin                    
-                    motor_temp = 4'd0;
-                end       
+//            if(ips_L == 1 && ips_r == 1)
+//                begin
+//                    motor_temp = 4'd2;
+//                end 
+//          else if(ips_r == 1)
+//                begin                    
+//                    motor_temp = 4'd1;
+//                end
+//          else if(ips_L == 1)
+//                begin                    
+//                    motor_temp = 4'd2;
+//                end
+//          else
+//                begin                    
+//                    motor_temp = 4'd0;
+//                end       
             
-         end
+//         end
+        
     endcase
     
 end
@@ -191,10 +199,7 @@ always@(*)
                 end
            default: // forwards
                 begin
-                    RMF_temp  =  1;
-                    RMB_temp  =  0;
-                    LMF_temp  =  1;
-                    LMB_temp  =  0;
+                    motor_temp = motor_temp;
                 end
         endcase
      end
