@@ -114,7 +114,7 @@ begin
         begin
            if(ips_r == 1)
             begin
-                state_temp = 4'd0;
+                state_temp = 4'd5;
             end
            else
             begin
@@ -123,6 +123,22 @@ begin
                 state_temp = 4'd4;
             end           
         end
+        
+        
+        4'd5:
+         begin
+            if(ips_L == 0)
+             begin
+                state_temp = 4'd0;
+             end
+            else 
+             begin
+                motor_temp = 4'd2;
+                pwm_state = 4'd4;
+                state_temp = 4'd5;
+             end
+         
+         end
         
 //       4'd5:
 //        begin
