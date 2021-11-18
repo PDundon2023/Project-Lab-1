@@ -13,8 +13,7 @@ module IPS_sensor(
     reg [6:0] motor_temp;
     reg RMF_temp, RMB_temp, LMF_temp, LMB_temp;
     reg [6:0] state_temp;
-    reg [6:0] obs_state;
-    reg state_two;
+    reg [6:0] pwm_state;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    
 always@(posedge clk)
@@ -30,16 +29,16 @@ always@(posedge clk)
     end
     
 always@(posedge clk)
-    begin
+    begin    
         if(counter_L == 1666667)
-            counter_L <= 0;
+                counter_L <= 0;
         else
-            counter_L <= counter_L +1;
+                counter_L <= counter_L +1;
         if(counter_L < pulsewidth_L)
-            LM_pwm_temp = 1;
-        else
-            LM_pwm_temp = 0;  
-    end
+                LM_pwm_temp = 1;
+         else
+                LM_pwm_temp = 0;
+    end  
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
  
 
@@ -56,113 +55,96 @@ begin
      
      
     case(state_temp)
-    4'd0: // normal state
-        begin
-           if(ips_L == 1 && ips_r == 1)
+        4'd0: // normal state
+         begin
+           pwm_state = 4'd1; // sets speed
+           
+           if(ips_L == 0 && ips_r == 0)
                 begin
-                    pulsewidth_L = 1333333;
-                    pulsewidth_r = 1333333;
                     motor_temp = 4'd0;
+                    state_temp = 4'd0;
                 end 
-          else if(ips_L == 1)
-                begin
-                    pulsewidth_L = 1333333;
-                    pulsewidth_r = 1333333;
+          else if(ips_L == 0)
+                begin                  
                     motor_temp = 4'd1;
+                    state_temp = 4'd0;
                 end
-          else if(ips_r == 1)
-                begin
-                    pulsewidth_L = 1333333;
-                    pulsewidth_r = 1333333;
+          else if(ips_r == 0)
+                begin                   
                     motor_temp = 4'd2;
+                    state_temp = 4'd0;
                 end
           else
                 begin
-                    pulsewidth_L = 1333333;
-                    pulsewidth_r = 1333333;
                     motor_temp = 4'd0;
+                    state_temp = 4'd0;
                 end
         end
         4'd1: // start of obstalce state
          begin
-            if(ips_r == 1) // alterante path is detected 
-             begin
-                state_temp = 4'd2;
+            pwm_state = 4'd4; 
+                     
+            if(ips_r == 0) // alterante path is detected 
+             begin           
+                state_temp = 4'd2; //chnage into next state
              end
-            else if(ips_r == 0)
+            else 
              begin
-                pulsewidth_L = 500000;
-                pulsewidth_r = 500000;
                 motor_temp = 4'd4; // go backwards
+                state_temp = 4'd1;
              end
          end
         
-        4'd2:
-         begin
-           if(ips_L == 1) // rover is now on the altertante path                                      
-             begin
-                state_temp = 4'd3;
-             end
-            else if(ips_L == 0)
-             begin
-                pulsewidth_L = 500000;
-                pulsewidth_r = 500000;
-                motor_temp = 4'd2; // turn right while detecting alterante path
-             end
-         end
-        4'd3:
-         begin
+       4'd2:
+        begin
+            pwm_state = 4'd4;
             if(ips_L == 0)
              begin
-                state_temp = 4'd4;
+                state_temp = 4'd3;
+                
              end
             else if(ips_L == 1)
              begin
-                pulsewidth_L = 500000;
-                pulsewidth_r = 500000;
-                motor_temp = 4'd2; // turn right while detecting alterante path
+                motor_temp = 4'd3;
+                state_temp = 4'd2;
              end
-         end
-        4'd4:
+            else 
+             begin
+                motor_temp = 4'd3;
+                pwm_state = 4'd4;
+                state_temp = 4'd2;
+             end
+        end  
+        
+        4'd3:
          begin
-            if(ips_L == 1)
-             begin
-                state_temp = 4'd0;
-             end
-            else if(ips_L == 0)
-             begin
-                pulsewidth_L = 500000;
-                pulsewidth_r = 500000;
-                motor_temp = 4'd2; // turn right while detecting alterante path
-             end
-         end
-   default:
-        begin
+            pwm_state = 4'd3;
+            motor_temp = 4'd2;
+            state_temp = 4'd3;
+         end 
+          
+        4'd5: // code to get off the alternate path
+         begin
+            pwm_state = 4'd2;
+            
             if(ips_L == 1 && ips_r == 1)
                 begin
-                    pulsewidth_L = 1333333;
-                    pulsewidth_r = 1333333;
-                    motor_temp = 4'd0;
+                    motor_temp = 4'd2;
                 end 
-          else if(ips_L == 1)
-                begin
-                    pulsewidth_L = 1333333;
-                    pulsewidth_r = 1333333;
+          else if(ips_r == 1)
+                begin                    
                     motor_temp = 4'd1;
                 end
-          else if(ips_r == 1)
-                begin
-                    pulsewidth_L = 1333333;
-                    pulsewidth_r = 1333333;
+          else if(ips_L == 1)
+                begin                    
                     motor_temp = 4'd2;
                 end
           else
-                begin
-                    pulsewidth_L = 1333333;
-                    pulsewidth_r = 1333333;
+                begin                    
                     motor_temp = 4'd0;
                 end       
-        end       
+            
+         end
     endcase
     
 end
@@ -217,7 +199,38 @@ always@(*)
         endcase
      end
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+always@(*)
+    begin
+        case(pwm_state)
+        4'd0: // 100% Duty cycle
+         begin
+             pulsewidth_L = 1666667;
+             pulsewidth_r = 1666667;
+         end
+        4'd1: // 80% duty cycle
+         begin
+            pulsewidth_L = 1333333;
+            pulsewidth_r = 1333333;
+         end
+        4'd2: // 50& duty cycle
+         begin
+            pulsewidth_L = 833334;
+            pulsewidth_r = 833334;
+         end
+        4'd3: // 30% duty cycle
+         begin
+            pulsewidth_L = 500000;
+            pulsewidth_r = 500000;
+         end
+        4'd4:
+         begin
+            pulsewidth_L = 333333;
+            pulsewidth_r = 333333;            
+         end
+        
+        
+        endcase
+    end
 
     
     assign RM_pwm = RM_pwm_temp; //JC2
