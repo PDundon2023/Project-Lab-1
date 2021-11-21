@@ -1,5 +1,5 @@
 module IPS_sensor(
-    input ips_r, ips_L, clk,obs_det,     
+    input ips_r, ips_L, ips_a, clk,obs_det,     
     output RMF,RMB,LMF,LMB, LM_pwm,RM_pwm   
     );
     
@@ -55,9 +55,9 @@ begin
      
      
     case(state_temp)
-        4'd0: // normal state
+        4'd0: // normal state or green state
          begin
-           pwm_state = 4'd1; // sets speed
+           pwm_state = 4'd0; // sets speed to 100%
            
            if(ips_L == 0 && ips_r == 0)
                 begin
@@ -83,9 +83,9 @@ begin
         
         4'd1: // start of obstalce state
          begin
-            pwm_state = 4'd4; 
+            pwm_state = 4'd1; // 50% speeed
                      
-            if(ips_r == 0) // alterante path is detected 
+            if(ips_a == 0) // alterante path is detected 
              begin           
                 state_temp = 4'd2; //chnage into next state
              end
@@ -96,78 +96,58 @@ begin
              end
          end
         
-       4'd2:
+       4'd2: // state once the alternate path is detected to turn right onto the path
         begin
-            if(ips_L == 0)
+            pwm_state = 4'd2; // 50% speed
+            if(ips_r == 0)
              begin
-                state_temp = 4'd4; // send into next state
-             end
-            else
-             begin
-               motor_temp = 4'd2; // turn right
-               pwm_state  = 4'd4;
-               state_temp = 4'd2;
-             end
-        end 
-       
-       4'd4:
-        begin
-           if(ips_r == 1)
-            begin
-                state_temp = 4'd5;
-            end
-           else
-            begin
-                motor_temp = 4'd2;
-                pwm_state  = 4'd4;
-                state_temp = 4'd4;
-            end           
-        end
-        
-        
-        4'd5:
-         begin
-            if(ips_L == 0)
-             begin
-                state_temp = 4'd0;
+                state_temp = 4'd7; // blue state
              end
             else 
              begin
                 motor_temp = 4'd2;
-                pwm_state = 4'd4;
-                state_temp = 4'd5;
+                state_temp = 4'd2;                
              end
-         
-         end
+        end 
         
-//       4'd5:
-//        begin
-//            motor_temp = 4'd3;
-//            state_temp = 4'd5;
-//        end
-                   
-//        4'd6: // code to get off the alternate path
-//         begin
-//            pwm_state = 4'd2;
+        4'd4: // RED STATE
+         begin
+            motor_temp = 4'd3;
+            pwm_state = 4'd6;
+            state_temp = 4'd4;
+         end
+                                   
+        4'd7: // state for the alterante path and to get off the alternate path (blue state)
+         begin
+          pwm_state = 4'd2;
             
-//            if(ips_L == 1 && ips_r == 1)
-//                begin
-//                    motor_temp = 4'd2;
-//                end 
-//          else if(ips_r == 1)
-//                begin                    
-//                    motor_temp = 4'd1;
-//                end
-//          else if(ips_L == 1)
-//                begin                    
-//                    motor_temp = 4'd2;
-//                end
-//          else
-//                begin                    
-//                    motor_temp = 4'd0;
-//                end       
+          if(ips_a == 0)
+                begin
+                    state_temp = 4'd2;
+                end
             
-//         end
+          else if(ips_L == 0 && ips_r == 0)
+                begin
+                    motor_temp = 4'd0;
+                    state_temp = 4'd7;
+                end 
+          else if(ips_L == 0)
+                begin                  
+                    motor_temp = 4'd1;
+                    state_temp = 4'd7;
+                end
+          else if(ips_r == 0)
+                begin                   
+                    motor_temp = 4'd2;
+                    state_temp = 4'd7;
+                end
+          else
+                begin
+                    motor_temp = 4'd0;
+                    state_temp = 4'd7;
+                end
+            
+         end
         
     endcase
     
@@ -213,7 +193,7 @@ always@(*)
                     LMF_temp  =  0;
                     LMB_temp  =  1;
                 end
-           default: // forwards
+           default:
                 begin
                     motor_temp = motor_temp;
                 end
@@ -243,13 +223,27 @@ always@(*)
             pulsewidth_L = 500000;
             pulsewidth_r = 500000;
          end
-        4'd4:
+        4'd4:// 20% duty cycle
          begin
             pulsewidth_L = 333333;
             pulsewidth_r = 333333;            
          end
-        
-        
+         4'd5: // 25% speed
+          begin 
+            pulsewidth_L = 416666;
+            pulsewidth_r = 416666;
+          end
+         4'd6: // stop
+          begin
+            pulsewidth_L = 0;
+            pulsewidth_r = 0;
+          end
+         4'd7: // 65% speed
+          begin
+            pulsewidth_L = 1083333;
+            pulsewidth_r = 1083333;
+          end
+               
         endcase
     end
 
