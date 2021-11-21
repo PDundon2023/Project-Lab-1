@@ -57,7 +57,7 @@ begin
     case(state_temp)
         4'd0: // normal state or green state
          begin
-           pwm_state = 4'd0; // sets speed to 100%
+           pwm_state = 4'd1; // sets speed to 80%
            
            if(ips_L == 0 && ips_r == 0)
                 begin
@@ -83,7 +83,7 @@ begin
         
         4'd1: // start of obstalce state
          begin
-            pwm_state = 4'd1; // 50% speeed
+            pwm_state = 4'd2; // 50% speeed
                      
             if(ips_a == 0) // alterante path is detected 
              begin           
@@ -98,7 +98,7 @@ begin
         
        4'd2: // state once the alternate path is detected to turn right onto the path
         begin
-            pwm_state = 4'd2; // 50% speed
+            pwm_state = 4'd1; // 50% speed
             if(ips_r == 0)
              begin
                 state_temp = 4'd7; // blue state
@@ -110,7 +110,7 @@ begin
              end
         end 
         
-        4'd4: // RED STATE
+        4'd9: // RED STATE
          begin
             motor_temp = 4'd3;
             pwm_state = 4'd6;
@@ -119,14 +119,9 @@ begin
                                    
         4'd7: // state for the alterante path and to get off the alternate path (blue state)
          begin
-          pwm_state = 4'd2;
-            
-          if(ips_a == 0)
-                begin
-                    state_temp = 4'd2;
-                end
-            
-          else if(ips_L == 0 && ips_r == 0)
+          pwm_state = 4'd1;
+                       
+         if(ips_L == 0 && ips_r == 0)
                 begin
                     motor_temp = 4'd0;
                     state_temp = 4'd7;
@@ -140,6 +135,10 @@ begin
                 begin                   
                     motor_temp = 4'd2;
                     state_temp = 4'd7;
+                end
+          else if(ips_a == 0)
+                begin
+                    state_temp = 4'd2;
                 end
           else
                 begin
