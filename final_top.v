@@ -66,6 +66,12 @@ module final_top(
     //assign select3 = 1;
     assign an = 4'b0111;
     
+    initial begin
+    
+        state_temp = 4'd0;
+        
+    end
+    
     always@ (posedge clk)
     begin
         counter <= counter + 1;    
@@ -75,9 +81,9 @@ module final_top(
         begin
             freqCount <= freqCount + 1;
         end    
-        else if(counter == 12_500_000)
+        else if(counter == 3_125_000)
         begin
-            freq <= freqCount << 3;
+            freq <= freqCount << 5;
             freqCount <= 0;
             counter <= 0;
         end
@@ -112,7 +118,7 @@ module final_top(
     case(colState)
     0 : begin // red filter select
             clkCount <= clkCount + 1;
-            if(clkCount == 12_500_000)
+            if(clkCount == 3_125_000)
             begin 
                 red <= freq;
                 //red = red - 10000;
@@ -125,7 +131,7 @@ module final_top(
         
     1 : begin // blue filter select
             clkCount <= clkCount + 1;
-            if(clkCount == 12_500_000)
+            if(clkCount == 3_125_000)
             begin
                 blue <= freq;
                 clkCount <= 0;
@@ -136,7 +142,7 @@ module final_top(
         end
     2 : begin
             clkCount <= clkCount + 1;
-            if(clkCount == 12_500_000)
+            if(clkCount == 3_125_000)
             begin
                 green <= freq;
                 clkCount <= 0;
@@ -146,26 +152,30 @@ module final_top(
             end
         end
     3: begin
-         if(blue < green && red > blue)
+         if(blue < green && red > blue && blue > 1000) // green state
             begin
-                blue_state  = 1;
-                green_state = 0;
-                red_state   = 0;
-            end
-         else if(red < green && red < blue && red > 1800)// && red >= 10000)
-            begin
-                blue_state  = 0;
-                green_state = 0;
-                red_state   = 1;
-            end
-         else if(green < blue && green < red && green > 2500)
-            begin
+                sseg_temp   = 7'b0000010;
                 blue_state  = 0;
                 green_state = 1;
                 red_state   = 0;
             end
+         else if(red < green && red < blue && red > 700) // red state 
+            begin   
+                sseg_temp   = 7'b0101111;
+                blue_state  = 0;
+                green_state = 0;
+                red_state   = 1;
+            end
+         else if(green > blue && red > blue && green > 1700) // blue state
+            begin
+                sseg_temp   = 7'b0000011;
+                blue_state  = 1;
+                green_state = 0;
+                red_state   = 0;
+            end
          else
             begin
+                sseg_temp = 7'b0111111;
                 blue_state = blue_state;
                 red_state = red_state;
                 green_state = green_state;
@@ -181,19 +191,22 @@ always@(*)
 begin
     if(obs_det == 0)
      begin
-        state_temp = 4'd1;
+          state_temp = 4'd1;
      end
     else if(red_state == 1)
      begin
-        state_temp = 4'd4;
+          pwm_state = 4'd6;
+     //   state_temp = 4'd9;
      end
     else if(blue_state == 1)
      begin
-        state_temp = 4'd7;
+          pwm_state = 4'd2;
+     //   state_temp = 4'd7;
      end
     else if(green_state == 1)
      begin
-        state_temp = 4'd0;
+          pwm_state = 4'd0;
+     //   state_temp = 4'd0;
      end
     else 
      begin
@@ -204,7 +217,7 @@ begin
     case(state_temp)
         4'd0: // normal state or green state
          begin
-           pwm_state = 4'd0; // sets speed to 100%
+          // pwm_state = 4'd1; // sets speed to 100%
            
            if(ips_L == 0 && ips_r == 0)
                 begin
@@ -230,7 +243,6 @@ begin
         
         4'd1: // start of obstalce state
          begin
-            pwm_state = 4'd1; // 50% speeed
                      
             if(ips_a == 0) // alterante path is detected 
              begin           
@@ -245,53 +257,53 @@ begin
         
        4'd2: // state once the alternate path is detected to turn right onto the path
         begin
-            pwm_state = 4'd2; // 50% speed
-            if(ips_r == 0)
+
+            if(ips_r == 1)
              begin
-                state_temp = 4'd7; // blue state
+                motor_temp = 4'd2;
+                state_temp = 4'd2; 
              end
             else 
              begin
-                motor_temp = 4'd2;
-                state_temp = 4'd2;                
+              //  motor_temp = 4'd2;
+                state_temp = 4'd6;                
              end
         end 
         
-        4'd4: // RED STATE
+        4'd9: // RED STATE
          begin
             motor_temp = 4'd3;
-            pwm_state = 4'd6;
+        //    pwm_state = 4'd6;
             state_temp = 4'd4;
          end
                                    
-        4'd7: // state for the alterante path and to get off the alternate path (blue state)
+        4'd6: // state for the alterante path and to get off the alternate path (blue state)
          begin
-          pwm_state = 4'd2;
+
             
-          if(ips_a == 0)
-                begin
-                    state_temp = 4'd2;
-                end
-            
-          else if(ips_L == 0 && ips_r == 0)
+         if(ips_L == 0 && ips_r == 0)
                 begin
                     motor_temp = 4'd0;
-                    state_temp = 4'd7;
+                    state_temp = 4'd6;
                 end 
           else if(ips_L == 0)
                 begin                  
                     motor_temp = 4'd1;
-                    state_temp = 4'd7;
+                    state_temp = 4'd6;
                 end
           else if(ips_r == 0)
                 begin                   
                     motor_temp = 4'd2;
-                    state_temp = 4'd7;
+                    state_temp = 4'd6;
                 end
+          else if(ips_a == 0)
+           begin
+                   state_temp = 4'd2;
+           end
           else
                 begin
                     motor_temp = 4'd0;
-                    state_temp = 4'd7;
+                    state_temp = 4'd6;
                 end
             
          end
